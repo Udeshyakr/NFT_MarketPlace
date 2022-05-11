@@ -65,7 +65,7 @@ Help
 npx hardhat help
 ```
 
-## Check at Rinkeby Test Net:
+## Check at Rinkeby Testnet:
  - [MangoToken](https://rinkeby.etherscan.io/address/0x039166EDa85333c1c19f87218C425Bc06659d25d)
  - [NFTMarket](https://rinkeby.etherscan.io/address/0xe12515E48b656cA1196b58CfEEd8cc29795D3667)
  - [myEpicNFT](https://rinkeby.etherscan.io/address/0xCCd7aaD4f40e4E41e1aF6b1056d4EB2D3E421cCd)
