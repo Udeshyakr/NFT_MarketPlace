@@ -26,7 +26,7 @@ To run this project, you will need to add the following environment variables to
 ## Tech Stack:
  - [Node](https://nodejs.org/en/)
  - [Hardhat](https://hardhat.org/tutorial/)
- - [Solidity](https://docs.soliditylang.org/en/v0.8.13/)
+ - [Solidity](https://docs.soliditylang.org/en/v0.8.13)
 
  
 ## Run Locally:
