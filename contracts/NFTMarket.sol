@@ -45,7 +45,7 @@ contract NFTMarket {
     );
 
 
-    function listNFTs(address nftContract, uint256 tokenId, uint256 price, uint256 royality) public payable {
+    function listNFTs(address nftContract, uint256 tokenId, uint256 price, uint256 royality) public {
         require(price > 0, "Price must be atleast 1 Wei");
         require(royality > 0, "royality should be between 0 to 10");
         require(royality < 10, "royality should less that 10");
