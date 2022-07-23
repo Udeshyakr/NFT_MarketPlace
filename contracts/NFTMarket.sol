@@ -4,9 +4,12 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./interfaces/IRoyalty.sol";
 
-contract NFTMarket {
+contract NFTMarket is ReentrancyGuard, ERC721Holder{
     using Counters for Counters.Counter;
     Counters.Counter private _itemsIds;
     Counters.Counter private _nftSold;
@@ -22,74 +25,72 @@ contract NFTMarket {
     }
 
     struct NFTMarketItem{
-        uint256 itemId;
-        address nftContract;
         uint256 tokenId;
-        uint256 royality;// adding royality
+        uint256 price;
+        address nftContract;
         address payable seller;
         address payable owner;
-        uint256 price;
         bool sold;
     }
 
     mapping(uint256 => NFTMarketItem) public marketItems;
 
     event MarketItemCreated(
-        uint indexed itemId,
-        address indexed nftContract,
         uint256 indexed tokenId,
-        address seller,
-        address owner,
+        address indexed nftContract,
         uint256 price,
-        bool sold
+        uint256 royalty,
+        address creator,
+        address owner,
+        address seller, 
+        bool sold  
     );
 
 
     function listNFTs(address nftContract, uint256 tokenId, uint256 price, uint256 royality) public payable {
         require(price > 0, "Price must be atleast 1 Wei");
-        require(royality > 0, "royality should be between 0 to 10");
-        require(royality < 10, "royality should less that 10");
-        //require(msg.value == listingPrice,"Price must be equal or greater than listing Price");
         _itemsIds.increment();
         uint256 itemId = _itemsIds.current();
 
         marketItems[itemId] = NFTMarketItem(
-            itemId,
-            nftContract,
             tokenId,
-            royality, // Initializing royality
+            price,
+            nftContract,
             payable(msg.sender),
             payable(address(0)),
-            price,
             false
         );
+        NFTMarketItem memory nftMarketItem = marketItems[tokenId];
+        (uint256 royaltyFee, address creator) = getRoyalty(nftMarketItem.nftContract, tokenId);
         IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId);
-        emit MarketItemCreated(
-            itemId, 
-            nftContract, 
-            tokenId, 
-            msg.sender, 
-            address(0), 
-            price, 
-            false
-            );
+        
     }
 
 
 
-    function buyNFT(uint256 tokenId) public payable{
-        uint256 price = marketItems[tokenId].price;
-        uint256 royalityFee = marketItems[tokenId].royality / denominator;
+    function buyNFT(uint256 tokenId) external payable nonReentrant{
+        NFTMarketItem memory nftMarketItem = marketItems[tokenId];
+
+        (uint256 royalty, address creator) = getRoyalty(nftMarketItem.nftContract, tokenId);
+        require(nftMarketItem.sold == false, "NFT is not up for sale");
+        require(msg.sender.balance >= nftMarketItem.price, "Account balance is less then the price of the NFT");
+        uint256 price = nftMarketItem.price;
+        uint256 royalityFee = (price * royalty )/ denominator;
         uint256 marketPlaceFee = price * platformFee / denominator;
         
-        tokenAddress.transferFrom(msg.sender,address(this), price);// 10 matic
-        tokenAddress.transferFrom(msg.sender, address(owner), royalityFee);
+        tokenAddress.transferFrom(msg.sender,address(nftMarketItem.seller), price);// 10 matic
+        tokenAddress.transferFrom(msg.sender, address(creator), royalityFee);
         tokenAddress.transferFrom(msg.sender, address(this), marketPlaceFee);
         marketItems[tokenId].owner = payable(msg.sender);
-
-        _nftSold.increment();  
+        marketItems[tokenId].sold = true;
+        
         IERC721(marketItems[tokenId].nftContract).transferFrom(address(this), msg.sender, tokenId);
          
+    }
+
+
+    function getRoyalty(address nftContractAddress, uint256 _tokenId) internal view returns (uint256 _royalty, address _creator) {
+            return IGetRoyalty(nftContractAddress).royaltyInfo(_tokenId);     
     }
     
 } 
