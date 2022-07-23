@@ -47,7 +47,7 @@ contract NFTMarket is ReentrancyGuard, ERC721Holder{
     );
 
 
-    function listNFTs(address nftContract, uint256 tokenId, uint256 price, uint256 royality) public payable {
+    function listNFTs(address nftContract, uint256 tokenId, uint256 price, uint256 royality) public {
         require(price > 0, "Price must be atleast 1 Wei");
         _itemsIds.increment();
         uint256 itemId = _itemsIds.current();
